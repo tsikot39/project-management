@@ -1,0 +1,28 @@
+{
+  "name": "saas-project-management",
+  "version": "1.0.0",
+  "description": "Multi-tenant SaaS Project Management Platform",
+  "scripts": {
+    "dev:backend": "cd backend && python saas_server.py",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && python -m pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "start:production": "cd backend && python saas_server.py"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "saas",
+    "project-management",
+    "react",
+    "fastapi",
+    "mongodb",
+    "multi-tenant"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

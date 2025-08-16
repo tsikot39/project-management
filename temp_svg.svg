@@ -1,0 +1,125 @@
+            <svg
+              width="520"
+              height="380"
+              viewBox="0 0 520 380"
+              className="w-full max-w-xl"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="100%" stopColor="#8B5CF6" />
+                </linearGradient>
+                <linearGradient id="cardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#FFFFFF" />
+                  <stop offset="100%" stopColor="#F8FAFC" />
+                </linearGradient>
+                <filter id="appShadow" x="-10%" y="-10%" width="120%" height="120%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="20" floodColor="rgba(0,0,0,0.15)" />
+                </filter>
+                <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.08)" />
+                </filter>
+              </defs>
+              
+              {/* Main App Window */}
+              <rect
+                x="40"
+                y="30"
+                width="440"
+                height="320"
+                rx="16"
+                fill="#FFFFFF"
+                filter="url(#appShadow)"
+                stroke="#E2E8F0"
+                strokeWidth="1"
+              />
+              
+              {/* App Header with Brand */}
+              <rect x="40" y="30" width="440" height="70" rx="16" fill="url(#headerGradient)" />
+              <rect x="40" y="86" width="440" height="1" fill="rgba(255,255,255,0.2)" />
+              
+              {/* Logo & Brand */}
+              <circle cx="75" cy="65" r="18" fill="#FFFFFF" />
+              <text x="75" y="72" textAnchor="middle" fill="url(#headerGradient)" fontSize="20" fontWeight="bold" fontFamily="system-ui">P</text>
+              <text x="105" y="62" fill="#FFFFFF" fontSize="22" fontWeight="bold" fontFamily="system-ui">ProjectHub</text>
+              <text x="105" y="78" fill="rgba(255,255,255,0.8)" fontSize="12" fontFamily="system-ui">Dashboard</text>
+              
+              {/* Navigation Pills */}
+              <rect x="280" y="52" width="60" height="26" rx="13" fill="rgba(255,255,255,0.25)" />
+              <text x="310" y="67" fill="#FFFFFF" fontSize="11" textAnchor="middle" fontWeight="600" fontFamily="system-ui">Projects</text>
+              <rect x="350" y="52" width="50" height="26" rx="13" fill="rgba(255,255,255,0.1)" />
+              <text x="375" y="67" fill="rgba(255,255,255,0.8)" fontSize="11" textAnchor="middle" fontFamily="system-ui">Teams</text>
+              <rect x="410" y="52" width="50" height="26" rx="13" fill="rgba(255,255,255,0.1)" />
+              <text x="435" y="67" fill="rgba(255,255,255,0.8)" fontSize="11" textAnchor="middle" fontFamily="system-ui">Tasks</text>
+              
+              {/* Stats Overview Cards */}
+              <rect x="60" y="110" width="90" height="70" rx="12" fill="url(#cardGradient)" filter="url(#cardShadow)" stroke="#E2E8F0" strokeWidth="1" />
+              <circle cx="80" cy="130" r="12" fill="#DBEAFE" />
+              <text x="80" y="136" textAnchor="middle" fontSize="16">📊</text>
+              <text x="105" y="134" fill="#111827" fontSize="24" fontWeight="bold" fontFamily="system-ui">12</text>
+              <text x="105" y="148" fill="#6B7280" fontSize="10" fontFamily="system-ui">Active Projects</text>
+              <text x="105" y="162" fill="#059669" fontSize="9" fontFamily="system-ui">+2 this week</text>
+              
+              <rect x="165" y="110" width="90" height="70" rx="12" fill="url(#cardGradient)" filter="url(#cardShadow)" stroke="#E2E8F0" strokeWidth="1" />
+              <circle cx="185" cy="130" r="12" fill="#DCFCE7" />
+              <text x="185" y="136" textAnchor="middle" fontSize="16">✅</text>
+              <text x="210" y="134" fill="#111827" fontSize="24" fontWeight="bold" fontFamily="system-ui">84</text>
+              <text x="210" y="148" fill="#6B7280" fontSize="10" fontFamily="system-ui">Completed</text>
+              <text x="210" y="162" fill="#059669" fontSize="9" fontFamily="system-ui">+5 today</text>
+              
+              <rect x="270" y="110" width="90" height="70" rx="12" fill="url(#cardGradient)" filter="url(#cardShadow)" stroke="#E2E8F0" strokeWidth="1" />
+              <circle cx="290" cy="130" r="12" fill="#FEF3C7" />
+              <text x="290" y="136" textAnchor="middle" fontSize="16">⏳</text>
+              <text x="315" y="134" fill="#111827" fontSize="24" fontWeight="bold" fontFamily="system-ui">23</text>
+              <text x="315" y="148" fill="#6B7280" fontSize="10" fontFamily="system-ui">In Progress</text>
+              <text x="315" y="162" fill="#DC2626" fontSize="9" fontFamily="system-ui">3 overdue</text>
+              
+              <rect x="375" y="110" width="90" height="70" rx="12" fill="url(#cardGradient)" filter="url(#cardShadow)" stroke="#E2E8F0" strokeWidth="1" />
+              <circle cx="395" cy="130" r="12" fill="#F3E8FF" />
+              <text x="395" y="136" textAnchor="middle" fontSize="16">👥</text>
+              <text x="420" y="134" fill="#111827" fontSize="24" fontWeight="bold" fontFamily="system-ui">8</text>
+              <text x="420" y="148" fill="#6B7280" fontSize="10" fontFamily="system-ui">Team Members</text>
+              <text x="420" y="162" fill="#059669" fontSize="9" fontFamily="system-ui">2 online now</text>
+              
+              {/* Main Content Section */}
+              <rect x="60" y="200" width="405" height="130" rx="12" fill="#FFFFFF" filter="url(#cardShadow)" stroke="#E2E8F0" strokeWidth="1" />
+              <rect x="60" y="200" width="405" height="40" fill="#F8FAFC" rx="12" />
+              <rect x="60" y="232" width="405" height="1" fill="#E2E8F0" />
+              <text x="80" y="223" fill="#111827" fontSize="15" fontWeight="600" fontFamily="system-ui">Recent Projects</text>
+              <rect x="360" y="208" width="85" height="24" rx="12" fill="url(#headerGradient)" />
+              <text x="402" y="222" fill="#FFFFFF" fontSize="11" textAnchor="middle" fontWeight="600" fontFamily="system-ui">+ New Project</text>
+              
+              {/* Project Items with Progress */}
+              <circle cx="85" cy="255" r="6" fill="#3B82F6" />
+              <text x="100" y="259" fill="#111827" fontSize="13" fontWeight="500" fontFamily="system-ui">Website Redesign</text>
+              <rect x="220" y="252" width="50" height="14" rx="7" fill="#DCFCE7" />
+              <text x="245" y="260" fill="#166534" fontSize="8" textAnchor="middle" fontFamily="system-ui">75% Done</text>
+              <rect x="285" y="252" width="120" height="6" rx="3" fill="#F1F5F9" />
+              <rect x="285" y="252" width="90" height="6" rx="3" fill="#3B82F6" />
+              <text x="420" y="259" fill="#6B7280" fontSize="10" textAnchor="end" fontFamily="system-ui">5 members</text>
+              
+              <circle cx="85" cy="275" r="6" fill="#10B981" />
+              <text x="100" y="279" fill="#111827" fontSize="13" fontWeight="500" fontFamily="system-ui">Mobile App Launch</text>
+              <rect x="220" y="272" width="50" height="14" rx="7" fill="#DCFCE7" />
+              <text x="245" y="280" fill="#166534" fontSize="8" textAnchor="middle" fontFamily="system-ui">Complete</text>
+              <rect x="285" y="272" width="120" height="6" rx="3" fill="#F1F5F9" />
+              <rect x="285" y="272" width="120" height="6" rx="3" fill="#10B981" />
+              <text x="420" y="279" fill="#6B7280" fontSize="10" textAnchor="end" fontFamily="system-ui">8 members</text>
+              
+              <circle cx="85" cy="295" r="6" fill="#8B5CF6" />
+              <text x="100" y="299" fill="#111827" fontSize="13" fontWeight="500" fontFamily="system-ui">Q3 Marketing Campaign</text>
+              <rect x="220" y="292" width="50" height="14" rx="7" fill="#FEF3C7" />
+              <text x="245" y="300" fill="#92400E" fontSize="8" textAnchor="middle" fontFamily="system-ui">Planning</text>
+              <rect x="285" y="292" width="120" height="6" rx="3" fill="#F1F5F9" />
+              <rect x="285" y="292" width="24" height="6" rx="3" fill="#8B5CF6" />
+              <text x="420" y="299" fill="#6B7280" fontSize="10" textAnchor="end" fontFamily="system-ui">3 members</text>
+              
+              {/* Activity Indicator */}
+              <circle cx="455" cy="315" r="4" fill="#10B981" />
+              <circle cx="455" cy="315" r="8" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.3">
+                <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <text x="440" y="319" fill="#10B981" fontSize="8" textAnchor="end" fontFamily="system-ui">Live</text>
+            </svg>
