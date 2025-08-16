@@ -49,14 +49,14 @@ export function EditProjectModal({
     }
 
     try {
-      await updateProject.mutateAsync({ 
-        id: project.id, 
+      await updateProject.mutateAsync({
+        id: project.id,
         updates: {
           name: formData.name,
           description: formData.description,
           endDate: formData.endDate,
           status: formData.status,
-        }
+        },
       });
 
       toast.success('Project updated successfully!');

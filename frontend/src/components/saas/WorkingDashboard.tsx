@@ -274,7 +274,7 @@ export function WorkingDashboard() {
             </h3>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>New Project</span>
@@ -296,7 +296,7 @@ export function WorkingDashboard() {
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 mx-auto"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2 mx-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Project</span>

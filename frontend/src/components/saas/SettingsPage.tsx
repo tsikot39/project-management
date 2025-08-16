@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { api } from '../../services/api';
 
 interface UserSettings {
   first_name: string;
@@ -53,13 +54,49 @@ export function SettingsPage() {
   } | null>(null);
 
   const [userSettings, setUserSettings] = useState<UserSettings>({
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john.doe@company.com',
-    phone: '+1 (555) 123-4567',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
     timezone: 'America/New_York',
     language: 'en',
   });
+
+  // Load user settings when component mounts
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        console.log('Loading user settings...');
+        const response = await api.getUserSettings();
+        console.log('API Response:', response);
+
+        if (response.success && response.data) {
+          console.log('Setting user data:', response.data);
+          setUserSettings({
+            first_name: response.data.first_name || '',
+            last_name: response.data.last_name || '',
+            email: response.data.email || '',
+            phone: response.data.phone || '',
+            timezone: response.data.timezone || 'America/New_York',
+            language: response.data.language || 'en',
+          });
+        } else {
+          console.log(
+            'API call successful but no data or success=false:',
+            response
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+        setMessage({
+          type: 'error',
+          text: 'Failed to load user settings.',
+        });
+      }
+    };
+
+    loadUserSettings();
+  }, []);
 
   const [orgSettings, setOrgSettings] = useState<OrganizationSettings>({
     name: 'Acme Corporation',
@@ -156,19 +193,45 @@ export function SettingsPage() {
     setMessage(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setMessage({
-        type: 'success',
-        text: `${section} settings updated successfully!`,
-      });
+      if (section === 'profile') {
+        // Save profile settings
+        const response = await api.updateUserSettings({
+          first_name: userSettings.first_name,
+          last_name: userSettings.last_name,
+          email: userSettings.email,
+          phone: userSettings.phone,
+          timezone: userSettings.timezone,
+          language: userSettings.language,
+        });
+
+        if (response.success) {
+          setMessage({
+            type: 'success',
+            text: response.message || 'Profile settings updated successfully!',
+          });
+        } else {
+          throw new Error(
+            response.message || 'Failed to update profile settings'
+          );
+        }
+      } else {
+        // For other sections, simulate API call for now
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setMessage({
+          type: 'success',
+          text: `${section} settings updated successfully!`,
+        });
+      }
 
       // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error updating settings:', error);
       setMessage({
         type: 'error',
-        text: `Failed to update ${section} settings. Please try again.`,
+        text:
+          error.message ||
+          `Failed to update ${section} settings. Please try again.`,
       });
     } finally {
       setIsLoading(false);
@@ -332,7 +395,7 @@ export function SettingsPage() {
                 <Button
                   onClick={() => handleSave('profile')}
                   disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save Changes
@@ -450,7 +513,7 @@ export function SettingsPage() {
                 <Button
                   onClick={() => handleSave('organization')}
                   disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save Changes
@@ -526,7 +589,7 @@ export function SettingsPage() {
                 <Button
                   onClick={() => handleSave('notifications')}
                   disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save Changes
@@ -657,7 +720,7 @@ export function SettingsPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     Update Password
@@ -731,9 +794,7 @@ export function SettingsPage() {
               <Settings className="w-8 h-8 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Settings
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
               <p className="text-sm text-gray-500 mt-1">
                 Manage your account and organization preferences
               </p>

@@ -168,9 +168,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
             <Button
               onClick={handleLogout}
-              variant="outline"
               size="sm"
-              className="w-full justify-center text-gray-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+              className="w-full justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

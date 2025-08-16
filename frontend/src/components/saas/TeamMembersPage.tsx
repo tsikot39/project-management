@@ -179,9 +179,7 @@ export function TeamMembersPage() {
               <Users className="w-8 h-8 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Team Members
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Team Members</h1>
               <p className="text-sm text-gray-500 mt-1">
                 Manage your team members and their access levels
               </p>
@@ -189,7 +187,7 @@ export function TeamMembersPage() {
           </div>
           <Button
             onClick={() => setIsInviteModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Invite Member

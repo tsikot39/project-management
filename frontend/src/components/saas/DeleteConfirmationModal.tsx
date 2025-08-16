@@ -50,7 +50,9 @@ export function DeleteConfirmationModal({
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Delete Project</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Delete Project
+                </h2>
                 <p className="text-sm text-gray-600">
                   This action cannot be undone
                 </p>
@@ -70,22 +72,23 @@ export function DeleteConfirmationModal({
             <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-full mb-4">
               <Trash2 className="w-8 h-8 text-red-600" />
             </div>
-            
+
             <div className="text-center space-y-3">
               <h3 className="text-lg font-semibold text-gray-900">
                 Are you sure you want to delete this project?
               </h3>
-              
+
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <p className="font-medium text-gray-900">{project.name}</p>
                 <p className="text-sm text-gray-600 mt-1">
                   {project.description || 'No description'}
                 </p>
               </div>
-              
+
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
-                  This will permanently delete the project and all associated data including:
+                  This will permanently delete the project and all associated
+                  data including:
                 </p>
                 <ul className="text-left space-y-1 ml-4">
                   <li>• All project tasks</li>
@@ -93,7 +96,7 @@ export function DeleteConfirmationModal({
                   <li>• Project history and activity logs</li>
                 </ul>
               </div>
-              
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                 <p className="text-sm text-yellow-800 font-medium">
                   ⚠️ This action cannot be undone!

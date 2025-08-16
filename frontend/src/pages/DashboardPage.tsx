@@ -81,11 +81,19 @@ export function DashboardPage() {
   ).length;
 
   // Debug: Log project statuses to help troubleshoot
-  console.log('Projects:', projects.map(p => ({ name: p.name, status: p.status })));
-  console.log('Tasks:', tasks.map(t => ({ title: t.title, status: t.status })));
-  
+  console.log(
+    'Projects:',
+    projects.map((p) => ({ name: p.name, status: p.status }))
+  );
+  console.log(
+    'Tasks:',
+    tasks.map((t) => ({ title: t.title, status: t.status }))
+  );
+
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((task: Task) => task.status === 'completed').length;
+  const completedTasks = tasks.filter(
+    (task: Task) => task.status === 'completed'
+  ).length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -187,11 +195,14 @@ export function DashboardPage() {
         <Section title="Recent Projects">
           <div className="space-y-4">
             {projects.slice(0, 3).map((project: Project) => {
-              const projectTasks = tasks.filter(task => task.project_id === project.id);
+              const projectTasks = tasks.filter(
+                (task) => task.project_id === project.id
+              );
               const progress = projectTasks.length
                 ? Math.round(
-                    (projectTasks.filter((task: Task) => task.status === 'completed')
-                      .length /
+                    (projectTasks.filter(
+                      (task: Task) => task.status === 'completed'
+                    ).length /
                       projectTasks.length) *
                       100
                   )

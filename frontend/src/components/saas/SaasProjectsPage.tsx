@@ -150,7 +150,7 @@ export function SaasProjectsPage() {
         `;
         document.body.appendChild(message);
         setTimeout(() => document.body.removeChild(message), 3000);
-        
+
         // Refresh the projects list
         loadProjects();
         setIsDeleteModalOpen(false);
@@ -168,7 +168,7 @@ export function SaasProjectsPage() {
       `;
       document.body.appendChild(message);
       setTimeout(() => document.body.removeChild(message), 3000);
-      
+
       console.error('Error deleting project:', error);
     } finally {
       setIsDeletingProject(false);
@@ -264,7 +264,7 @@ export function SaasProjectsPage() {
             </button>
             <button
               onClick={() => setIsCreateProjectModalOpen(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>New Project</span>
@@ -313,7 +313,7 @@ export function SaasProjectsPage() {
           </p>
           <button
             onClick={() => setIsCreateProjectModalOpen(true)}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 mx-auto"
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center space-x-2 mx-auto"
           >
             <Plus className="w-5 h-5" />
             <span>Create First Project</span>
@@ -377,7 +377,7 @@ export function SaasProjectsPage() {
                   >
                     <Kanban className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -387,7 +387,7 @@ export function SaasProjectsPage() {
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     className="p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -396,7 +396,7 @@ export function SaasProjectsPage() {
                   >
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50"
                     onClick={(e) => {
                       e.stopPropagation();

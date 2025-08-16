@@ -3,11 +3,17 @@ const API_BASE = 'http://localhost:8000/api';
 
 // Get JWT token from localStorage
 const getAuthToken = () => {
-  return localStorage.getItem('token');
+  return localStorage.getItem('access_token');
 };
 
 // Get organization slug from localStorage or URL
 const getOrgSlug = () => {
+  // First try to get from organization object, fallback to direct slug
+  const orgData = localStorage.getItem('organization');
+  if (orgData) {
+    const org = JSON.parse(orgData);
+    return org.slug;
+  }
   return localStorage.getItem('organization_slug') || 'default-org';
 };
 
@@ -229,10 +235,10 @@ export const api = {
     const response = await fetch(`${API_BASE}/${orgSlug}/settings/profile`, {
       headers: getHeaders(),
     });
-    return response.json();
-  },
-
-  async updateUserSettings(settingsData: any) {
+    
+    const data = await response.json();
+    return data;
+  },  async updateUserSettings(settingsData: any) {
     const orgSlug = getOrgSlug();
     const response = await fetch(`${API_BASE}/${orgSlug}/settings/profile`, {
       method: 'PUT',

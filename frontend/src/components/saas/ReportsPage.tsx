@@ -182,7 +182,7 @@ export function ReportsPage() {
             <Button
               onClick={exportReport}
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-colors"
             >
               <Download className="w-4 h-4 mr-2" />
               {isLoading ? 'Exporting...' : 'Export Report'}

@@ -41,7 +41,7 @@ export function ProjectEditModal({
         name: project.name || '',
         description: project.description || '',
         due_date: project.due_date || '',
-        status: project.status as any || 'planning',
+        status: (project.status as any) || 'planning',
       });
     }
   }, [project]);
@@ -84,7 +84,7 @@ export function ProjectEditModal({
         name: project.name || '',
         description: project.description || '',
         due_date: project.due_date || '',
-        status: project.status as any || 'planning',
+        status: (project.status as any) || 'planning',
       });
     }
     onClose();
@@ -113,7 +113,9 @@ export function ProjectEditModal({
                 <Edit3 className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Edit Project</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Edit Project
+                </h2>
                 <p className="text-sm text-gray-600">
                   Update your project details
                 </p>

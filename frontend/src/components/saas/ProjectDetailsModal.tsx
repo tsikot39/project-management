@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { 
-  X, 
-  Eye, 
-  Calendar, 
-  FileText, 
-  Clock, 
-  CheckCircle, 
+import {
+  X,
+  Eye,
+  Calendar,
+  FileText,
+  Clock,
+  CheckCircle,
   AlertCircle,
   BarChart3,
-  Tag
+  Tag,
 } from 'lucide-react';
 import { tasksApi } from '../../services/saasApi';
 
@@ -58,13 +58,15 @@ export function ProjectDetailsModal({
 
   const loadProjectTasks = async () => {
     if (!project) return;
-    
+
     setIsLoadingTasks(true);
     try {
       const response = await tasksApi.getAll();
       if (response.success && response.data) {
         // Filter tasks for this project
-        const filteredTasks = response.data.filter((task: Task) => task.project_id === project.id);
+        const filteredTasks = response.data.filter(
+          (task: Task) => task.project_id === project.id
+        );
         setProjectTasks(filteredTasks);
       }
     } catch (error) {
@@ -130,8 +132,10 @@ export function ProjectDetailsModal({
 
   const calculateProgress = () => {
     if (projectTasks.length === 0) return 0;
-    const completedTasks = projectTasks.filter(task => 
-      task.status.toLowerCase() === 'done' || task.status.toLowerCase() === 'completed'
+    const completedTasks = projectTasks.filter(
+      (task) =>
+        task.status.toLowerCase() === 'done' ||
+        task.status.toLowerCase() === 'completed'
     ).length;
     return Math.round((completedTasks / projectTasks.length) * 100);
   };
@@ -139,15 +143,18 @@ export function ProjectDetailsModal({
   const getTaskStats = () => {
     return {
       total: projectTasks.length,
-      completed: projectTasks.filter(task => 
-        task.status.toLowerCase() === 'done' || task.status.toLowerCase() === 'completed'
+      completed: projectTasks.filter(
+        (task) =>
+          task.status.toLowerCase() === 'done' ||
+          task.status.toLowerCase() === 'completed'
       ).length,
-      inProgress: projectTasks.filter(task => 
-        task.status.toLowerCase() === 'in_progress' || task.status.toLowerCase() === 'in-progress'
+      inProgress: projectTasks.filter(
+        (task) =>
+          task.status.toLowerCase() === 'in_progress' ||
+          task.status.toLowerCase() === 'in-progress'
       ).length,
-      todo: projectTasks.filter(task => 
-        task.status.toLowerCase() === 'todo'
-      ).length,
+      todo: projectTasks.filter((task) => task.status.toLowerCase() === 'todo')
+        .length,
     };
   };
 
@@ -177,7 +184,9 @@ export function ProjectDetailsModal({
                 <Eye className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{project.name}</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {project.name}
+                </h2>
                 <p className="text-sm text-gray-600">
                   Project Details & Overview
                 </p>
@@ -201,50 +210,64 @@ export function ProjectDetailsModal({
                   <FileText className="w-5 h-5 mr-2 text-blue-500" />
                   Project Information
                 </h3>
-                
+
                 <div className="space-y-3">
                   <div>
-                    <div className="text-sm font-medium text-gray-500">Description</div>
+                    <div className="text-sm font-medium text-gray-500">
+                      Description
+                    </div>
                     <p className="text-gray-900 bg-gray-50 p-3 rounded-lg mt-1">
                       {project.description || 'No description provided'}
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <div className="text-sm font-medium text-gray-500">Status</div>
+                      <div className="text-sm font-medium text-gray-500">
+                        Status
+                      </div>
                       <div className="mt-1">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(project.status)}`}>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(project.status)}`}
+                        >
                           {project.status.replace('-', ' ').toUpperCase()}
                         </span>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <div className="text-sm font-medium text-gray-500">Priority</div>
+                      <div className="text-sm font-medium text-gray-500">
+                        Priority
+                      </div>
                       <div className="mt-1">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(project.priority || 'medium')}`}>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(project.priority || 'medium')}`}
+                        >
                           {(project.priority || 'MEDIUM').toUpperCase()}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="text-sm font-medium text-gray-500 flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         Created
                       </div>
-                      <p className="text-gray-900 mt-1">{formatDate(project.created_at)}</p>
+                      <p className="text-gray-900 mt-1">
+                        {formatDate(project.created_at)}
+                      </p>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm font-medium text-gray-500 flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         Due Date
                       </div>
-                      <p className="text-gray-900 mt-1">{formatDate(project.due_date)}</p>
+                      <p className="text-gray-900 mt-1">
+                        {formatDate(project.due_date)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -256,13 +279,15 @@ export function ProjectDetailsModal({
                   <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
                   Progress & Statistics
                 </h3>
-                
+
                 <div className="space-y-4">
                   {/* Progress Bar */}
                   <div>
                     <div className="flex items-center justify-between text-sm mb-2">
                       <span className="text-gray-500">Overall Progress</span>
-                      <span className="font-medium text-gray-900">{progress}%</span>
+                      <span className="font-medium text-gray-900">
+                        {progress}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div
@@ -275,22 +300,30 @@ export function ProjectDetailsModal({
                   {/* Task Stats */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">{taskStats.total}</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {taskStats.total}
+                      </div>
                       <div className="text-sm text-blue-600">Total Tasks</div>
                     </div>
-                    
+
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                      <div className="text-2xl font-bold text-green-600">{taskStats.completed}</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {taskStats.completed}
+                      </div>
                       <div className="text-sm text-green-600">Completed</div>
                     </div>
-                    
+
                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                      <div className="text-2xl font-bold text-yellow-600">{taskStats.inProgress}</div>
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {taskStats.inProgress}
+                      </div>
                       <div className="text-sm text-yellow-600">In Progress</div>
                     </div>
-                    
+
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <div className="text-2xl font-bold text-gray-600">{taskStats.todo}</div>
+                      <div className="text-2xl font-bold text-gray-600">
+                        {taskStats.todo}
+                      </div>
                       <div className="text-sm text-gray-600">To Do</div>
                     </div>
                   </div>
@@ -322,21 +355,30 @@ export function ProjectDetailsModal({
               {!isLoadingTasks && projectTasks.length > 0 && (
                 <div className="space-y-3">
                   {projectTasks.map((task) => (
-                    <div key={task.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                    <div
+                      key={task.id}
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             {getTaskStatusIcon(task.status)}
-                            <h4 className="font-medium text-gray-900">{task.title}</h4>
-                            <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(task.status)}`}>
+                            <h4 className="font-medium text-gray-900">
+                              {task.title}
+                            </h4>
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(task.status)}`}
+                            >
                               {task.status.replace('_', ' ').toUpperCase()}
                             </span>
                           </div>
-                          
+
                           {task.description && (
-                            <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {task.description}
+                            </p>
                           )}
-                          
+
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span className="flex items-center">
                               <Tag className="w-3 h-3 mr-1" />
