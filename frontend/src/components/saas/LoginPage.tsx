@@ -11,6 +11,7 @@ import {
 } from '../ui/card';
 import { Label } from '../ui/label';
 import { Building2, Mail, Lock, ArrowLeft } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface LoginFormData {
   email: string;
@@ -24,6 +25,10 @@ export function LoginPage() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +64,32 @@ export function LoginPage() {
       alert('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsForgotPasswordLoading(true);
+    setForgotPasswordMessage('');
+
+    try {
+      const response = await api.forgotPassword(forgotPasswordEmail);
+      
+      if (response.success) {
+        setForgotPasswordMessage(response.message);
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setForgotPasswordMessage('');
+          setForgotPasswordEmail('');
+        }, 3000);
+      } else {
+        setForgotPasswordMessage(response.message || 'Failed to send reset email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      setForgotPasswordMessage('Failed to send reset email. Please try again.');
+    } finally {
+      setIsForgotPasswordLoading(false);
     }
   };
 
@@ -134,6 +165,17 @@ export function LoginPage() {
               </Button>
             </form>
 
+            {/* Forgot Password Link */}
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                Forgot your password?
+              </button>
+            </div>
+
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
@@ -147,6 +189,71 @@ export function LoginPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-2">Reset Password</h2>
+                <p className="text-gray-600 text-sm mb-4">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+                
+                <form onSubmit={handleForgotPassword}>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="reset-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="john@example.com"
+                          value={forgotPasswordEmail}
+                          onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {forgotPasswordMessage && (
+                      <div className={`text-sm ${forgotPasswordMessage.includes('Failed') 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                        }`}>
+                        {forgotPasswordMessage}
+                      </div>
+                    )}
+
+                    <div className="flex space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setForgotPasswordEmail('');
+                          setForgotPasswordMessage('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        disabled={isForgotPasswordLoading}
+                      >
+                        {isForgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

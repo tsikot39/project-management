@@ -3,13 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { dashboardApi, projectsApi } from '../../services/saasApi';
 import { ProjectCreateModal } from './ProjectCreateModal';
-
-interface User {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-}
+import { useUserData } from '../../hooks/useUserData';
 
 interface Organization {
   id: string;
@@ -36,7 +30,10 @@ interface DashboardStats {
 
 export function WorkingDashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  
+  // Use custom hook for user data that automatically updates
+  const user = useUserData();
+  
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -56,7 +53,6 @@ export function WorkingDashboard() {
     }
 
     try {
-      setUser(JSON.parse(userData));
       setOrganization(JSON.parse(orgData));
       loadDashboardData();
     } catch (error) {

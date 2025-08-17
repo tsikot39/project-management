@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NewWorkingLandingPage from './components/saas/NewWorkingLandingPage';
 import { WorkingLoginPage } from './components/saas/WorkingLoginPage';
 import { SignUpPage } from './components/saas/SignUpPage';
+import { ResetPasswordPage } from './components/saas/ResetPasswordPage';
 import { WorkingDashboard } from './components/saas/WorkingDashboard';
 import { SaasProjectsPage } from './components/saas/SaasProjectsPage';
 import { ProjectKanbanPage } from './components/saas/ProjectKanbanPage';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<NewWorkingLandingPage />} />
         <Route path="/login" element={<WorkingLoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Dashboard routes with layout */}
         <Route

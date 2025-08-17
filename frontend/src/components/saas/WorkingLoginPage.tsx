@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../services/api';
 
 export function WorkingLoginPage() {
   const navigate = useNavigate();
@@ -13,6 +14,12 @@ export function WorkingLoginPage() {
     email?: string;
     password?: string;
   }>({});
+  
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
 
   // Email validation regex (RFC 5322 compliant)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -115,6 +122,32 @@ export function WorkingLoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsForgotPasswordLoading(true);
+    setForgotPasswordMessage('');
+
+    try {
+      const response = await api.forgotPassword(forgotPasswordEmail);
+      
+      if (response.success) {
+        setForgotPasswordMessage(response.message);
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setForgotPasswordMessage('');
+          setForgotPasswordEmail('');
+        }, 3000);
+      } else {
+        setForgotPasswordMessage(response.message || 'Failed to send reset email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      setForgotPasswordMessage('Failed to send reset email. Please try again.');
+    } finally {
+      setIsForgotPasswordLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -212,6 +245,7 @@ export function WorkingLoginPage() {
             <div className="flex justify-end">
               <button
                 type="button"
+                onClick={() => setShowForgotPassword(true)}
                 className="text-sm text-blue-600 hover:text-blue-500"
               >
                 Forgot password?
@@ -244,6 +278,72 @@ export function WorkingLoginPage() {
             </p>
           </div>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+            style={{ zIndex: 9999 }}
+          >
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-2">Reset Password</h2>
+                <p className="text-gray-600 text-sm mb-4">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+                
+                <form onSubmit={handleForgotPassword}>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        id="reset-email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    {forgotPasswordMessage && (
+                      <div className={`text-sm ${forgotPasswordMessage.includes('Failed') 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                        }`}>
+                        {forgotPasswordMessage}
+                      </div>
+                    )}
+
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setForgotPasswordEmail('');
+                          setForgotPasswordMessage('');
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 py-2 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                        disabled={isForgotPasswordLoading}
+                      >
+                        {isForgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-8">
           <p className="text-sm text-gray-500">

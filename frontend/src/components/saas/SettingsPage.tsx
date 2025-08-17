@@ -5,9 +5,7 @@ import {
   Building2,
   Bell,
   Shield,
-  Palette,
   Database,
-  Download,
   Trash2,
   Save,
   Eye,
@@ -48,6 +46,8 @@ interface NotificationSettings {
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -138,11 +138,6 @@ export function SettingsPage() {
     },
     { id: 'security', label: 'Security', icon: <Shield className="w-4 h-4" /> },
     {
-      id: 'preferences',
-      label: 'Preferences',
-      icon: <Palette className="w-4 h-4" />,
-    },
-    {
       id: 'data',
       label: 'Data & Privacy',
       icon: <Database className="w-4 h-4" />,
@@ -214,6 +209,23 @@ export function SettingsPage() {
             response.message || 'Failed to update profile settings'
           );
         }
+      } else if (section === 'password') {
+        // Change password
+        const response = await api.changePassword({
+          current_password: passwordData.current_password,
+          new_password: passwordData.new_password,
+        });
+
+        if (response.success) {
+          setMessage({
+            type: 'success',
+            text: response.message || 'Password changed successfully!',
+          });
+        } else {
+          throw new Error(
+            response.message || 'Failed to change password'
+          );
+        }
       } else {
         // For other sections, simulate API call for now
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -265,6 +277,30 @@ export function SettingsPage() {
         show_new: false,
         show_confirm: false,
       });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      setMessage({ type: 'error', text: 'Please type "DELETE" to confirm.' });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.deleteAccount();
+      // Redirect to login page after successful deletion
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Delete account error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'Failed to delete account. Please try again.' 
+      });
+    } finally {
+      setIsLoading(false);
+      setShowDeleteDialog(false);
+      setDeleteConfirmation('');
     }
   };
 
@@ -736,26 +772,9 @@ export function SettingsPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Data Management
+                Account Management
               </h3>
               <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">
-                    Export Data
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Download all your data including projects, tasks, and team
-                    information.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
-
                 <div className="p-4 border border-red-200 rounded-lg bg-red-50">
                   <h4 className="font-medium text-red-900 mb-2">Danger Zone</h4>
                   <p className="text-sm text-red-700 mb-4">
@@ -765,6 +784,7 @@ export function SettingsPage() {
                   <Button
                     variant="outline"
                     className="text-red-600 border-red-600 hover:bg-red-100"
+                    onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Account
@@ -772,6 +792,51 @@ export function SettingsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Delete Account Confirmation Dialog */}
+            {showDeleteDialog && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Delete Account
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    This action cannot be undone. All your data, including projects, 
+                    tasks, and team information, will be permanently deleted.
+                  </p>
+                  <p className="text-sm font-medium text-red-600 mb-4">
+                    Type <strong>DELETE</strong> to confirm:
+                  </p>
+                  <input
+                    type="text"
+                    value={deleteConfirmation}
+                    onChange={(e) => setDeleteConfirmation(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 mb-4"
+                    placeholder="Type DELETE here"
+                  />
+                  <div className="flex space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDeleteDialog(false);
+                        setDeleteConfirmation('');
+                        setMessage(null);
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmation !== 'DELETE' || isLoading}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      {isLoading ? 'Deleting...' : 'Delete Account'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 

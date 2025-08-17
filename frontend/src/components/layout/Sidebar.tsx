@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Home,
@@ -11,6 +10,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useUserData } from '../../hooks/useUserData';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,14 +21,13 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  
+  // Use custom hook for user data that automatically updates
+  const user = useUserData();
 
   // Get organization data from localStorage
   const organizationData = localStorage.getItem('organization');
   const organization = organizationData ? JSON.parse(organizationData) : null;
-
-  // Get user data from localStorage
-  const userData = localStorage.getItem('user');
-  const user = userData ? JSON.parse(userData) : null;
 
   const navigationItems = [
     {

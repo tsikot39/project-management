@@ -5,6 +5,8 @@ Features: Authentication, Organizations, Subscriptions, Multi-tenancy
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
+import secrets
+import string
 from fastapi import FastAPI, HTTPException, Depends, Header, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -16,6 +18,14 @@ import bcrypt
 from websocket_manager import websocket_manager
 from email_service import email_service
 from bson import ObjectId
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not installed, use system environment variables
+    pass
 
 # MongoDB connection
 MONGODB_URL = "mongodb+srv://tsikot39:n4w5rb@cluster0.3f8yqnc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -36,10 +46,16 @@ security = HTTPBearer()
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # SaaS Plan Configuration
@@ -123,8 +139,11 @@ def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-def verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+def verify_password(password: str, hashed) -> bool:
+    # Handle both string and bytes for the hashed password
+    if isinstance(hashed, str):
+        hashed = hashed.encode('utf-8')
+    return bcrypt.checkpw(password.encode('utf-8'), hashed)
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -335,7 +354,21 @@ async def signup(user_data: UserSignup):
 async def login(credentials: UserLogin):
     """Authenticate user"""
     user = await db.users.find_one({"email": credentials.email})
-    if not user or not verify_password(credentials.password, user["password_hash"]):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    # Get password field - handle both field names for compatibility
+    stored_password = user.get("password_hash") or user.get("password")
+    if not stored_password:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="User password not properly configured"
+        )
+    
+    if not verify_password(credentials.password, stored_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -389,6 +422,88 @@ async def login(credentials: UserLogin):
 async def get_me(current_user = Depends(get_current_user)):
     """Get current user info"""
     return {"success": True, "data": current_user}
+
+# Password Reset Models
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+def generate_reset_token():
+    """Generate a secure random token for password reset"""
+    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    """Send password reset email"""
+    user = await db.users.find_one({"email": request.email})
+    
+    if not user:
+        # Don't reveal if email exists or not for security
+        return {"success": True, "message": "If your email is registered, you will receive a password reset link."}
+    
+    # Generate reset token
+    reset_token = generate_reset_token()
+    reset_token_expires = datetime.utcnow() + timedelta(hours=1)  # Token expires in 1 hour
+    
+    # Save reset token to database
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "reset_token": reset_token,
+            "reset_token_expires": reset_token_expires,
+            "updated_at": datetime.utcnow()
+        }}
+    )
+    
+    # Send password reset email
+    await email_service.send_password_reset_email(
+        to_email=user["email"],
+        user_name=f"{user['first_name']} {user['last_name']}",
+        reset_token=reset_token
+    )
+    
+    return {"success": True, "message": "If your email is registered, you will receive a password reset link."}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Reset password using token"""
+    user = await db.users.find_one({
+        "reset_token": request.token,
+        "reset_token_expires": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Validate password strength
+    if len(request.new_password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters long"
+        )
+    
+    # Hash new password and clear reset token
+    new_password_hash = hash_password(request.new_password)
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "password_hash": new_password_hash,
+            "updated_at": datetime.utcnow()
+        },
+        "$unset": {
+            "reset_token": "",
+            "reset_token_expires": ""
+        }}
+    )
+    
+    return {"success": True, "message": "Password has been reset successfully. You can now log in with your new password."}
 
 # SaaS Management Routes
 @app.get("/api/plans")
@@ -1065,13 +1180,13 @@ async def update_organization_settings(org_slug: str, request: OrganizationSetti
     
     return {"success": True, "message": "Organization settings updated successfully"}
 
-class PasswordChangeRequest(BaseModel):
-    current_password: str
-    new_password: str
+class NotificationSettingsRequest(BaseModel):
+    email_notifications: bool
+    push_notifications: bool
 
-@app.put("/api/{org_slug}/settings/password")
-async def change_password(org_slug: str, request: PasswordChangeRequest, current_user = Depends(get_current_user)):
-    """Change user password"""
+@app.get("/api/{org_slug}/settings/notifications")
+async def get_notification_settings(org_slug: str, current_user = Depends(get_current_user)):
+    """Get user notification settings"""
     org, user_role = await get_user_organization(org_slug, current_user["id"])
     
     # Get user from database
@@ -1079,20 +1194,205 @@ async def change_password(org_slug: str, request: PasswordChangeRequest, current
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Verify current password
-    if not bcrypt.checkpw(request.current_password.encode('utf-8'), user["password"]):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    notification_settings = {
+        "email_notifications": user.get("notification_settings", {}).get("email_notifications", True),
+        "push_notifications": user.get("notification_settings", {}).get("push_notifications", True),
+    }
     
-    # Hash new password
-    hashed_password = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt())
+    return {"success": True, "data": notification_settings}
+
+@app.put("/api/{org_slug}/settings/notifications")
+async def update_notification_settings(org_slug: str, request: NotificationSettingsRequest, current_user = Depends(get_current_user)):
+    """Update user notification settings"""
+    org, user_role = await get_user_organization(org_slug, current_user["id"])
     
-    # Update password
+    # Get user from database
+    user = await db.users.find_one({"_id": ObjectId(current_user["id"])})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update notification settings
+    notification_settings = {
+        "email_notifications": request.email_notifications,
+        "push_notifications": request.push_notifications,
+    }
+    
+    update_data = {
+        "notification_settings": notification_settings,
+        "updated_at": datetime.utcnow()
+    }
+    
     await db.users.update_one(
         {"_id": ObjectId(current_user["id"])},
-        {"$set": {"password": hashed_password, "updated_at": datetime.utcnow()}}
+        {"$set": update_data}
     )
     
-    return {"success": True, "message": "Password updated successfully"}
+    return {"success": True, "message": "Notification settings updated successfully"}
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@app.options("/api/{org_slug}/settings/password")
+async def change_password_options(org_slug: str):
+    """Handle preflight OPTIONS request for password change"""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content={"message": "OK"},
+        headers={
+            "Access-Control-Allow-Origin": "http://localhost:3000",
+            "Access-Control-Allow-Methods": "PUT, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
+
+@app.put("/api/{org_slug}/settings/password")
+async def change_password(org_slug: str, request: PasswordChangeRequest, current_user = Depends(get_current_user)):
+    """Change user password"""
+    from fastapi.responses import JSONResponse
+    
+    try:
+        _, user_role = await get_user_organization(org_slug, current_user["id"])
+        
+        # Get user from database
+        user = await db.users.find_one({"_id": ObjectId(current_user["id"])})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Verify current password
+        stored_password = user.get("password_hash") or user.get("password")
+        if not stored_password:
+            raise HTTPException(status_code=500, detail="User password not properly configured")
+            
+        # Ensure stored_password is bytes for bcrypt
+        if isinstance(stored_password, str):
+            stored_password = stored_password.encode('utf-8')
+            
+        if not bcrypt.checkpw(request.current_password.encode('utf-8'), stored_password):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Hash new password
+        hashed_password = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt())
+        
+        # Update password - try both field names for compatibility
+        update_fields = {"updated_at": datetime.utcnow()}
+        if "password_hash" in user:
+            update_fields["password_hash"] = hashed_password
+        else:
+            update_fields["password"] = hashed_password
+            
+        await db.users.update_one(
+            {"_id": ObjectId(current_user["id"])},
+            {"$set": update_fields}
+        )
+        
+        return JSONResponse(
+            content={"success": True, "message": "Password updated successfully"},
+            headers={
+                "Access-Control-Allow-Origin": "http://localhost:3000",
+                "Access-Control-Allow-Credentials": "true",
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.options("/api/{org_slug}/settings/account")
+async def options_delete_account(org_slug: str):
+    """CORS preflight for delete account endpoint"""
+    from fastapi.responses import Response
+    return Response(
+        headers={
+            "Access-Control-Allow-Origin": "http://localhost:3000",
+            "Access-Control-Allow-Methods": "DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Credentials": "true",
+        }
+    )
+
+@app.delete("/api/{org_slug}/settings/account")
+async def delete_account(org_slug: str, current_user = Depends(get_current_user)):
+    """Delete user account and all associated data"""
+    from fastapi.responses import JSONResponse
+    
+    try:
+        org, user_role = await get_user_organization(org_slug, current_user["id"])
+        user_id = ObjectId(current_user["id"])
+        
+        # Check if user is the only admin of the organization
+        if user_role == "admin":
+            admin_count = await db.organization_members.count_documents({
+                "organization_id": org["_id"],
+                "role": "admin",
+                "status": "active"
+            })
+            if admin_count <= 1:
+                # If this is the only admin, delete the entire organization
+                await delete_organization_and_data(org["_id"])
+            else:
+                # Remove user from organization but keep the org
+                await delete_user_from_organization(user_id, org["_id"])
+        else:
+            # Regular user - just remove from organization
+            await delete_user_from_organization(user_id, org["_id"])
+        
+        # Check if user is a member of any other organizations
+        other_memberships = await db.organization_members.count_documents({
+            "user_id": user_id,
+            "status": "active"
+        })
+        
+        if other_memberships == 0:
+            # User has no other organizations, delete user account
+            await db.users.delete_one({"_id": user_id})
+        
+        return JSONResponse(
+            content={"success": True, "message": "Account deleted successfully"},
+            headers={
+                "Access-Control-Allow-Origin": "http://localhost:3000",
+                "Access-Control-Allow-Credentials": "true",
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def delete_user_from_organization(user_id: ObjectId, org_id: ObjectId):
+    """Remove user from organization and clean up their data"""
+    # Remove user from organization
+    await db.organization_members.delete_one({
+        "user_id": user_id,
+        "organization_id": org_id
+    })
+    
+    # Remove user assignments from tasks
+    await db.tasks.update_many(
+        {"organization_id": org_id, "assigned_to": user_id},
+        {"$unset": {"assigned_to": ""}}
+    )
+    
+    # Remove user from project members
+    await db.projects.update_many(
+        {"organization_id": org_id},
+        {"$pull": {"members": {"user_id": user_id}}}
+    )
+
+async def delete_organization_and_data(org_id: ObjectId):
+    """Delete entire organization and all associated data"""
+    # Delete all projects in the organization
+    await db.projects.delete_many({"organization_id": org_id})
+    
+    # Delete all tasks in the organization
+    await db.tasks.delete_many({"organization_id": org_id})
+    
+    # Delete all organization members
+    await db.organization_members.delete_many({"organization_id": org_id})
+    
+    # Delete the organization itself
+    await db.organizations.delete_one({"_id": org_id})
 
 # Reports APIs
 @app.get("/api/{org_slug}/reports/overview")
