@@ -74,7 +74,7 @@ export function LoginPage() {
 
     try {
       const response = await api.forgotPassword(forgotPasswordEmail);
-      
+
       if (response.success) {
         setForgotPasswordMessage(response.message);
         setTimeout(() => {
@@ -83,7 +83,9 @@ export function LoginPage() {
           setForgotPasswordEmail('');
         }, 3000);
       } else {
-        setForgotPasswordMessage(response.message || 'Failed to send reset email. Please try again.');
+        setForgotPasswordMessage(
+          response.message || 'Failed to send reset email. Please try again.'
+        );
       }
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -197,9 +199,10 @@ export function LoginPage() {
               <div className="p-6">
                 <h2 className="text-xl font-semibold mb-2">Reset Password</h2>
                 <p className="text-gray-600 text-sm mb-4">
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we'll send you a link to reset
+                  your password.
                 </p>
-                
+
                 <form onSubmit={handleForgotPassword}>
                   <div className="space-y-4">
                     <div>
@@ -211,7 +214,9 @@ export function LoginPage() {
                           type="email"
                           placeholder="john@example.com"
                           value={forgotPasswordEmail}
-                          onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                          onChange={(e) =>
+                            setForgotPasswordEmail(e.target.value)
+                          }
                           className="pl-10"
                           required
                         />
@@ -219,10 +224,13 @@ export function LoginPage() {
                     </div>
 
                     {forgotPasswordMessage && (
-                      <div className={`text-sm ${forgotPasswordMessage.includes('Failed') 
-                          ? 'text-red-600' 
-                          : 'text-green-600'
-                        }`}>
+                      <div
+                        className={`text-sm ${
+                          forgotPasswordMessage.includes('Failed')
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}
+                      >
                         {forgotPasswordMessage}
                       </div>
                     )}
@@ -245,7 +253,9 @@ export function LoginPage() {
                         className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                         disabled={isForgotPasswordLoading}
                       >
-                        {isForgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                        {isForgotPasswordLoading
+                          ? 'Sending...'
+                          : 'Send Reset Link'}
                       </Button>
                     </div>
                   </div>

@@ -22,10 +22,16 @@ export function useUserData() {
     };
 
     // Listen for user data updates from API calls
-    window.addEventListener('userDataUpdated', handleUserDataUpdate as EventListener);
-    
+    window.addEventListener(
+      'userDataUpdated',
+      handleUserDataUpdate as EventListener
+    );
+
     return () => {
-      window.removeEventListener('userDataUpdated', handleUserDataUpdate as EventListener);
+      window.removeEventListener(
+        'userDataUpdated',
+        handleUserDataUpdate as EventListener
+      );
     };
   }, []);
 

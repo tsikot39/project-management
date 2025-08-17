@@ -31,7 +31,7 @@ export function ResetPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setMessage('Passwords do not match.');
       return;
@@ -47,7 +47,7 @@ export function ResetPasswordPage() {
 
     try {
       const response = await api.resetPassword(token!, password);
-      
+
       if (response.success) {
         setIsSuccess(true);
         setMessage(response.message);
@@ -55,7 +55,9 @@ export function ResetPasswordPage() {
           navigate('/login');
         }, 3000);
       } else {
-        setMessage(response.message || 'Failed to reset password. Please try again.');
+        setMessage(
+          response.message || 'Failed to reset password. Please try again.'
+        );
       }
     } catch (error) {
       console.error('Reset password error:', error);
@@ -73,7 +75,11 @@ export function ResetPasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back to Login */}
-        <Button variant="ghost" onClick={() => navigate('/login')} className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/login')}
+          className="mb-4"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Login
         </Button>
@@ -91,10 +97,9 @@ export function ResetPasswordPage() {
               {isSuccess ? 'Password Reset Successful' : 'Reset Your Password'}
             </CardTitle>
             <CardDescription>
-              {isSuccess 
+              {isSuccess
                 ? 'Your password has been successfully reset. Redirecting to login...'
-                : 'Enter your new password below'
-              }
+                : 'Enter your new password below'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -135,10 +140,13 @@ export function ResetPasswordPage() {
                 </div>
 
                 {message && (
-                  <div className={`text-sm ${message.includes('success') 
-                      ? 'text-green-600' 
-                      : 'text-red-600'
-                    }`}>
+                  <div
+                    className={`text-sm ${
+                      message.includes('success')
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
                     {message}
                   </div>
                 )}

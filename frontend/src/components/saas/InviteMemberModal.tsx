@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Mail, User, Shield, Eye } from 'lucide-react';
 import { Button } from '../ui/button';
+import { dashboardApi } from '../../services/saasApi';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -64,8 +65,11 @@ export function InviteMemberModal({
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      await dashboardApi.inviteMember({
+        email: formData.email,
+        role: formData.role,
+        message: formData.message,
+      });
 
       // Reset form
       setFormData({
@@ -75,9 +79,9 @@ export function InviteMemberModal({
       });
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to invite member:', error);
-      setError('Failed to send invitation. Please try again.');
+      setError(error.message || 'Failed to send invitation. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +135,41 @@ export function InviteMemberModal({
               <span className="text-sm text-red-700">{error}</span>
             </div>
           )}
+
+          {/* Email Limitation Info */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 text-amber-600 mt-0.5">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Development Mode Limitation
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Email invitations currently only work for{' '}
+                  <strong>corpusjohnbenedict@gmail.com</strong>. Other
+                  recipients will be added to the team but won't receive email
+                  notifications. For production use, verify a domain at{' '}
+                  <a
+                    href="https://resend.com/domains"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    resend.com/domains
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Email Field */}
           <div>

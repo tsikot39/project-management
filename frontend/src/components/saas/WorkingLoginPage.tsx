@@ -14,7 +14,7 @@ export function WorkingLoginPage() {
     email?: string;
     password?: string;
   }>({});
-  
+
   // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
@@ -129,7 +129,7 @@ export function WorkingLoginPage() {
 
     try {
       const response = await api.forgotPassword(forgotPasswordEmail);
-      
+
       if (response.success) {
         setForgotPasswordMessage(response.message);
         setTimeout(() => {
@@ -138,7 +138,9 @@ export function WorkingLoginPage() {
           setForgotPasswordEmail('');
         }, 3000);
       } else {
-        setForgotPasswordMessage(response.message || 'Failed to send reset email. Please try again.');
+        setForgotPasswordMessage(
+          response.message || 'Failed to send reset email. Please try again.'
+        );
       }
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -281,21 +283,25 @@ export function WorkingLoginPage() {
 
         {/* Forgot Password Modal */}
         {showForgotPassword && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
             style={{ zIndex: 9999 }}
           >
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
               <div className="p-6">
                 <h2 className="text-xl font-semibold mb-2">Reset Password</h2>
                 <p className="text-gray-600 text-sm mb-4">
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we'll send you a link to reset
+                  your password.
                 </p>
-                
+
                 <form onSubmit={handleForgotPassword}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="reset-email"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Email
                       </label>
                       <input
@@ -310,10 +316,13 @@ export function WorkingLoginPage() {
                     </div>
 
                     {forgotPasswordMessage && (
-                      <div className={`text-sm ${forgotPasswordMessage.includes('Failed') 
-                          ? 'text-red-600' 
-                          : 'text-green-600'
-                        }`}>
+                      <div
+                        className={`text-sm ${
+                          forgotPasswordMessage.includes('Failed')
+                            ? 'text-red-600'
+                            : 'text-green-600'
+                        }`}
+                      >
                         {forgotPasswordMessage}
                       </div>
                     )}
@@ -335,7 +344,9 @@ export function WorkingLoginPage() {
                         className="flex-1 py-2 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                         disabled={isForgotPasswordLoading}
                       >
-                        {isForgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                        {isForgotPasswordLoading
+                          ? 'Sending...'
+                          : 'Send Reset Link'}
                       </button>
                     </div>
                   </div>

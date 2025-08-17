@@ -222,9 +222,7 @@ export function SettingsPage() {
             text: response.message || 'Password changed successfully!',
           });
         } else {
-          throw new Error(
-            response.message || 'Failed to change password'
-          );
+          throw new Error(response.message || 'Failed to change password');
         }
       } else {
         // For other sections, simulate API call for now
@@ -293,9 +291,9 @@ export function SettingsPage() {
       window.location.href = '/login';
     } catch (error) {
       console.error('Delete account error:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to delete account. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: 'Failed to delete account. Please try again.',
       });
     } finally {
       setIsLoading(false);
@@ -801,8 +799,9 @@ export function SettingsPage() {
                     Delete Account
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    This action cannot be undone. All your data, including projects, 
-                    tasks, and team information, will be permanently deleted.
+                    This action cannot be undone. All your data, including
+                    projects, tasks, and team information, will be permanently
+                    deleted.
                   </p>
                   <p className="text-sm font-medium text-red-600 mb-4">
                     Type <strong>DELETE</strong> to confirm:

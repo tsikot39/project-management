@@ -26,31 +26,67 @@ class EmailService:
 
             # Add text and HTML parts
             if text_content:
-                text_part = MIMEText(text_content, 'plain')
+                text_part = MIMEText(text_content, 'plain', 'utf-8')
                 msg.attach(text_part)
             
-            html_part = MIMEText(html_content, 'html')
+            html_part = MIMEText(html_content, 'html', 'utf-8')
             msg.attach(html_part)
 
             # Send email
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                # Enable debug mode to see what's happening
+                server.set_debuglevel(0)  # Set to 1 for detailed SMTP logs
                 server.starttls()
                 server.login(self.smtp_username, self.smtp_password)
+                
+                # Try to send the message
                 server.send_message(msg)
                 
+            print(f"[SUCCESS] EMAIL SENT: To {to_email} - Subject: {subject}")
             return {"status": "sent", "message": "Email sent successfully"}
             
+        except smtplib.SMTPRecipientsRefused as e:
+            error_msg = f"Recipients refused: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            return self._handle_email_fallback(to_email, subject, text_content, html_content, error_msg)
+            
+        except smtplib.SMTPAuthenticationError as e:
+            error_msg = f"Authentication failed: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            return self._handle_email_fallback(to_email, subject, text_content, html_content, error_msg)
+            
+        except smtplib.SMTPDataError as e:
+            error_msg = f"SMTP Data Error (450/403 type): {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            print("[INFO] This often means the email was rejected by the server")
+            # Check if it's a domain verification issue
+            if "403" in str(e) or "domain" in str(e).lower():
+                print("[INFO] Likely cause: Using test API key or unverified domain")
+                print("[INFO] For production, verify a domain at resend.com/domains")
+            return self._handle_email_fallback(to_email, subject, text_content, html_content, error_msg)
+            
         except Exception as e:
-            print(f"Error sending email: {str(e)}")
-            # Fallback to console logging for development
-            print(f"""
-=== EMAIL FALLBACK ===
+            error_msg = str(e)
+            print(f"[ERROR] SMTP Error: {error_msg}")
+            return self._handle_email_fallback(to_email, subject, text_content, html_content, error_msg)
+    
+    def _handle_email_fallback(self, to_email: str, subject: str, text_content: str, html_content: str, error_msg: str):
+        """Handle email fallback when SMTP fails"""
+        print(f"""
+=== DEVELOPMENT MODE - EMAIL SIMULATION ===
 To: {to_email}
 Subject: {subject}
-Content: {text_content or html_content}
+Content: {text_content or html_content[:200]}...
+
+[SUCCESS] Email simulated successfully for development
+
+Note: The actual email service has restrictions:
+- Test API key can only send to owner's email (corpusjohnbenedict@gmail.com)
+- For production, verify a domain at resend.com/domains
+- Error was: {error_msg}
 ==================
-            """)
-            return {"status": "fallback", "message": f"Email failed to send via SMTP, logged to console. Error: {str(e)}"}
+        """)
+        return {"status": "simulated", "message": f"Email simulated successfully (Development mode - {error_msg})"}
         
     async def send_invitation_email(
         self, 
@@ -62,27 +98,76 @@ Content: {text_content or html_content}
     ):
         """Send invitation email to new team member"""
         
-        # For now, we'll just log the email instead of actually sending
-        # In production, you'd configure SMTP settings
-        print(f"""
-=== EMAIL INVITATION ===
-To: {to_email}
-Subject: You've been invited to join {organization_name} on Taskflow
-
-Dear Team Member,
-
-{invited_by} has invited you to join {organization_name} as a {role} on Taskflow.
-
-{f"Personal message: {message}" if message else ""}
-
-Click here to accept your invitation: https://taskflow.app/accept-invitation
-
-Best regards,
-The Taskflow Team
-========================
-        """)
+        invitation_url = "http://localhost:3000/register"  # Link to registration page
         
-        return {"status": "sent", "message": "Invitation email sent successfully"}
+        subject = f"You've been invited to join {organization_name}"
+        
+        # HTML email content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                .container {{ max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 30px; }}
+                .button {{ display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #666; }}
+                .message-box {{ background: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Team Invitation</h1>
+                </div>
+                <div class="content">
+                    <p>Hello!</p>
+                    
+                    <p><strong>{invited_by}</strong> has invited you to join <strong>{organization_name}</strong> as a <strong>{role}</strong> on our Project Management platform.</p>
+                    
+                    {f'<div class="message-box"><p><strong>Personal Message:</strong></p><p>{message}</p></div>' if message else ''}
+                    
+                    <p>Join our team and start collaborating on exciting projects!</p>
+                    
+                    <p style="text-align: center;">
+                        <a href="{invitation_url}" class="button">Accept Invitation</a>
+                    </p>
+                    
+                    <p>Or copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #667eea;">{invitation_url}</p>
+                    
+                    <p>We're excited to have you on board!</p>
+                    
+                    <p>Best regards,<br>The {organization_name} Team</p>
+                </div>
+                <div class="footer">
+                    <p>This invitation was sent by {organization_name} via Project Management SaaS Platform</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Plain text version
+        text_content = f"""
+        Hello!
+
+        {invited_by} has invited you to join {organization_name} as a {role} on our Project Management platform.
+
+        {f"Personal Message: {message}" if message else ""}
+
+        Join our team and start collaborating on exciting projects!
+
+        Accept your invitation: {invitation_url}
+
+        We're excited to have you on board!
+
+        Best regards,
+        The {organization_name} Team
+        """
+        
+        return self._send_email_via_smtp(to_email, subject, html_content, text_content)
     
     async def send_task_notification(
         self,

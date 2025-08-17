@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Users,
-  Plus,
   Mail,
-  MoreHorizontal,
   Crown,
   Shield,
   User as UserIcon,
@@ -16,6 +14,8 @@ import {
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { InviteMemberModal } from './InviteMemberModal';
+import { ConfirmationModal } from './ConfirmationModal';
+import { ToastContainer, useToast } from '../ui/Toast';
 import { dashboardApi } from '../../services/saasApi';
 
 interface TeamMember {
@@ -46,6 +46,22 @@ export function TeamMembersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const { toasts, removeToast, showSuccess, showError } = useToast();
+
+  // Confirmation modal state
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'member' | 'invitation';
+    id: string;
+    name: string;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    type: 'member',
+    id: '',
+    name: '',
+    isLoading: false,
+  });
 
   useEffect(() => {
     fetchTeamMembers();
@@ -141,6 +157,75 @@ export function TeamMembersPage() {
   const handleInviteSuccess = () => {
     setIsInviteModalOpen(false);
     fetchTeamMembers();
+    showSuccess(
+      'Team member added successfully! Email notifications only work for corpusjohnbenedict@gmail.com in development mode. For production, verify a domain at resend.com.'
+    );
+  };
+
+  const handleDeleteMember = (memberId: string, memberName: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'member',
+      id: memberId,
+      name: memberName,
+      isLoading: false,
+    });
+  };
+
+  const handleDeleteInvitation = (invitationId: string, email: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      type: 'invitation',
+      id: invitationId,
+      name: email,
+      isLoading: false,
+    });
+  };
+
+  const confirmDelete = async () => {
+    setDeleteConfirmation((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      if (deleteConfirmation.type === 'member') {
+        await dashboardApi.removeMember(deleteConfirmation.id);
+        showSuccess(
+          `${deleteConfirmation.name} has been removed from the team`
+        );
+      } else {
+        await dashboardApi.deleteInvitation(deleteConfirmation.id);
+        showSuccess(
+          `Invitation for ${deleteConfirmation.name} has been cancelled`
+        );
+      }
+
+      // Refresh the member list
+      fetchTeamMembers();
+
+      // Close modal
+      setDeleteConfirmation({
+        isOpen: false,
+        type: 'member',
+        id: '',
+        name: '',
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      showError(
+        `Failed to ${deleteConfirmation.type === 'member' ? 'remove member' : 'cancel invitation'}. Please try again.`
+      );
+      setDeleteConfirmation((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      type: 'member',
+      id: '',
+      name: '',
+      isLoading: false,
+    });
   };
 
   if (isLoading) {
@@ -354,6 +439,12 @@ export function TeamMembersPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-500 hover:text-red-700"
+                          onClick={() =>
+                            handleDeleteMember(
+                              member.id,
+                              `${member.first_name} ${member.last_name}`
+                            )
+                          }
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -420,6 +511,9 @@ export function TeamMembersPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-500 hover:text-red-700"
+                          onClick={() =>
+                            handleDeleteInvitation(invite.id, invite.email)
+                          }
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -439,6 +533,34 @@ export function TeamMembersPage() {
         onClose={() => setIsInviteModalOpen(false)}
         onSuccess={handleInviteSuccess}
       />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+        title={
+          deleteConfirmation.type === 'member'
+            ? 'Remove Team Member'
+            : 'Cancel Invitation'
+        }
+        message={
+          deleteConfirmation.type === 'member'
+            ? `Are you sure you want to remove ${deleteConfirmation.name} from the team? They will lose access to all projects and data.`
+            : `Are you sure you want to cancel the invitation for ${deleteConfirmation.name}? They will need to be invited again to join the team.`
+        }
+        confirmText={
+          deleteConfirmation.type === 'member'
+            ? 'Remove Member'
+            : 'Cancel Invitation'
+        }
+        cancelText="Keep"
+        isLoading={deleteConfirmation.isLoading}
+        variant="danger"
+      />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

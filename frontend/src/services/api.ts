@@ -77,12 +77,14 @@ export const api = {
     if (response.success && response.data) {
       // Update localStorage with fresh data from database
       localStorage.setItem('user', JSON.stringify(response.data));
-      
+
       // Dispatch event to notify components of user data update
-      window.dispatchEvent(new CustomEvent('userDataUpdated', { 
-        detail: response.data 
-      }));
-      
+      window.dispatchEvent(
+        new CustomEvent('userDataUpdated', {
+          detail: response.data,
+        })
+      );
+
       return response.data;
     }
     return null;
@@ -101,9 +103,9 @@ export const api = {
     const response = await fetch(`${API_BASE}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        token, 
-        new_password: newPassword 
+      body: JSON.stringify({
+        token,
+        new_password: newPassword,
       }),
     });
     return response.json();
@@ -281,10 +283,11 @@ export const api = {
     const response = await fetch(`${API_BASE}/${orgSlug}/settings/profile`, {
       headers: getHeaders(),
     });
-    
+
     const data = await response.json();
     return data;
-  },  async updateUserSettings(settingsData: any) {
+  },
+  async updateUserSettings(settingsData: any) {
     const orgSlug = getOrgSlug();
     const response = await fetch(`${API_BASE}/${orgSlug}/settings/profile`, {
       method: 'PUT',
@@ -375,14 +378,14 @@ export const api = {
       });
       console.log('Delete account response status:', response.status);
       console.log('Delete account response ok:', response.ok);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       // Clear all local storage on successful deletion
       localStorage.clear();
-      
+
       return response.json();
     } catch (error) {
       console.error('Delete account error:', error);

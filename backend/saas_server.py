@@ -904,6 +904,13 @@ async def get_organization_members(org_slug: str, current_user = Depends(get_cur
     async for membership in db.organization_members.find({"organization_id": org["id"]}):
         user = await db.users.find_one({"_id": ObjectId(membership["user_id"])})
         if user:
+            # Handle joined_date - it might be a datetime or string
+            joined_at = membership.get("joined_at", datetime.utcnow())
+            if isinstance(joined_at, str):
+                joined_date = joined_at
+            else:
+                joined_date = joined_at.isoformat()
+            
             members.append({
                 "id": str(user["_id"]),
                 "email": user["email"],
@@ -911,7 +918,7 @@ async def get_organization_members(org_slug: str, current_user = Depends(get_cur
                 "last_name": user["last_name"],
                 "role": membership["role"],
                 "status": "active",
-                "joined_date": membership.get("joined_at", datetime.utcnow()).isoformat(),
+                "joined_date": joined_date,
                 "last_active": datetime.utcnow().isoformat()
             })
     
@@ -980,13 +987,20 @@ async def invite_member(org_slug: str, request: InviteMemberRequest, current_use
     del invitation["_id"]
     
     # Send email invitation
-    await email_service.send_invitation_email(
-        to_email=request.email,
-        organization_name=org["name"],
-        invited_by=f"{current_user['first_name']} {current_user['last_name']}",
-        role=request.role,
-        message=request.message
-    )
+    print(f"DEBUG: Sending invitation email to {request.email} for organization {org['name']}")
+    try:
+        email_result = await email_service.send_invitation_email(
+            to_email=request.email,
+            organization_name=org["name"],
+            invited_by=f"{current_user['first_name']} {current_user['last_name']}",
+            role=request.role,
+            message=request.message
+        )
+        print(f"DEBUG: Email result: {email_result}")
+    except Exception as e:
+        print(f"DEBUG: Error sending invitation email: {str(e)}")
+        # Don't fail the request if email fails
+        print(f"DEBUG: Invitation created but email failed to send")
     
     # Broadcast real-time update
     await broadcast_update(org["id"], "member_invited", {
@@ -1437,16 +1451,100 @@ async def get_reports_overview(org_slug: str, timeframe: str = "30d", current_us
     total_tasks = await db.tasks.count_documents({"organization_id": org["id"]})
     completed_tasks = await db.tasks.count_documents({
         "organization_id": org["id"], 
-        "status": "completed"
+        "status": {"$in": ["completed", "done"]}  # Support both "completed" and "done"
     })
     overdue_tasks = await db.tasks.count_documents({
         "organization_id": org["id"], 
         "due_date": {"$lt": now},
-        "status": {"$ne": "completed"}
+        "status": {"$nin": ["completed", "done"]}  # Exclude both "completed" and "done"
     })
     
     # Get team members count
     team_members = await db.organization_members.count_documents({"organization_id": org["id"]})
+    
+    # Calculate actual average completion time
+    avg_completion_time = "N/A"
+    try:
+        print(f"DEBUG Avg Completion: Starting calculation for org {org['id']}")
+        
+        # Get completed tasks with both created and completion dates
+        completed_tasks_with_dates = await db.tasks.find({
+            "organization_id": org["id"],
+            "status": {"$in": ["completed", "done"]},
+            "created_at": {"$exists": True},
+            "updated_at": {"$exists": True}
+        }).to_list(length=None)
+        
+        print(f"DEBUG Avg Completion: Found {len(completed_tasks_with_dates)} completed tasks with timestamps")
+        
+        if completed_tasks_with_dates:
+            total_completion_days = 0
+            valid_tasks = 0
+            
+            for task in completed_tasks_with_dates:
+                created_at = task.get("created_at")
+                updated_at = task.get("updated_at")
+                
+                print(f"DEBUG Avg Completion: Task '{task.get('title')}' - created: {created_at}, updated: {updated_at}")
+                
+                if created_at and updated_at:
+                    # Parse dates if they're strings
+                    if isinstance(created_at, str):
+                        try:
+                            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                        except Exception as e:
+                            print(f"DEBUG Avg Completion: Error parsing created_at '{created_at}': {e}")
+                            continue
+                    if isinstance(updated_at, str):
+                        try:
+                            updated_at = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                        except Exception as e:
+                            print(f"DEBUG Avg Completion: Error parsing updated_at '{updated_at}': {e}")
+                            continue
+                    
+                    # Calculate completion time in days
+                    completion_time = updated_at - created_at
+                    completion_days = completion_time.total_seconds() / (24 * 3600)  # Convert to days
+                    
+                    print(f"DEBUG Avg Completion: Task completion time: {completion_days:.2f} days")
+                    
+                    # Only count reasonable completion times (0.1 to 365 days)
+                    if 0.1 <= completion_days <= 365:
+                        total_completion_days += completion_days
+                        valid_tasks += 1
+                        print(f"DEBUG Avg Completion: Added to calculation (valid tasks: {valid_tasks})")
+                    else:
+                        print(f"DEBUG Avg Completion: Rejected completion time: {completion_days:.2f} days (out of range)")
+            
+            print(f"DEBUG Avg Completion: Valid tasks: {valid_tasks}, Total days: {total_completion_days}")
+            
+            if valid_tasks > 0:
+                avg_days = total_completion_days / valid_tasks
+                print(f"DEBUG Avg Completion: Calculated average: {avg_days:.2f} days")
+                if avg_days < 1:
+                    avg_completion_time = f"{avg_days * 24:.1f} hours"
+                else:
+                    avg_completion_time = f"{avg_days:.1f} days"
+            else:
+                avg_completion_time = "< 1 day"
+        else:
+            print("DEBUG Avg Completion: No completed tasks with timestamps found")
+            
+            # Check if there are any tasks at all
+            all_tasks_debug = await db.tasks.find({"organization_id": org["id"]}).to_list(length=None)
+            print(f"DEBUG Avg Completion: Total tasks in org: {len(all_tasks_debug)}")
+            for task in all_tasks_debug:
+                print(f"DEBUG Avg Completion: Task '{task.get('title')}' has fields: {list(task.keys())}")
+            
+            avg_completion_time = "No data"
+            
+    except Exception as e:
+        print(f"DEBUG Avg Completion: Error calculating average completion time: {e}")
+        import traceback
+        traceback.print_exc()
+        avg_completion_time = "N/A"
+    
+    print(f"DEBUG Avg Completion: Final result: {avg_completion_time}")
     
     return {"success": True, "data": {
         "total_projects": total_projects,
@@ -1456,7 +1554,7 @@ async def get_reports_overview(org_slug: str, timeframe: str = "30d", current_us
         "completed_tasks": completed_tasks,
         "overdue_tasks": overdue_tasks,
         "team_members": team_members,
-        "avg_completion_time": "3.2 days"  # TODO: Calculate actual average
+        "avg_completion_time": avg_completion_time
     }}
 
 @app.get("/api/{org_slug}/reports/projects")
@@ -1469,12 +1567,12 @@ async def get_project_reports(org_slug: str, current_user = Depends(get_current_
         total_tasks = await db.tasks.count_documents({"project_id": str(project["_id"])})
         completed_tasks = await db.tasks.count_documents({
             "project_id": str(project["_id"]), 
-            "status": "completed"
+            "status": {"$in": ["completed", "done"]}  # Support both "completed" and "done"
         })
         overdue_tasks = await db.tasks.count_documents({
             "project_id": str(project["_id"]), 
             "due_date": {"$lt": datetime.utcnow()},
-            "status": {"$ne": "completed"}
+            "status": {"$nin": ["completed", "done"]}  # Exclude both "completed" and "done"
         })
         
         completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
@@ -1494,11 +1592,45 @@ async def get_team_reports(org_slug: str, current_user = Depends(get_current_use
     """Get team performance reports"""
     org, user_role = await get_user_organization(org_slug, current_user["id"])
     
+    # Debug: Check what tasks exist and their assignment
+    all_tasks = await db.tasks.find({"organization_id": org["id"]}).to_list(length=None)
+    print(f"DEBUG Team Reports: Found {len(all_tasks)} total tasks for org {org['id']}")
+    for task in all_tasks:
+        print(f"DEBUG Team Reports: Task '{task.get('title')}' assigned_to: {task.get('assigned_to', 'None')}")
+    
+    # Count unassigned tasks
+    unassigned_tasks = await db.tasks.count_documents({
+        "organization_id": org["id"],
+        "$or": [
+            {"assigned_to": {"$exists": False}},
+            {"assigned_to": None},
+            {"assigned_to": ""}
+        ]
+    })
+    unassigned_completed_tasks = await db.tasks.count_documents({
+        "organization_id": org["id"],
+        "$or": [
+            {"assigned_to": {"$exists": False}},
+            {"assigned_to": None},
+            {"assigned_to": ""}
+        ],
+        "status": {"$in": ["completed", "done"]}
+    })
+    
+    print(f"DEBUG Team Reports: Found {unassigned_tasks} unassigned tasks, {unassigned_completed_tasks} completed")
+    
     team_stats = []
+    member_count = 0
+    total_members = await db.organization_members.count_documents({"organization_id": org["id"]})
+    
     async for membership in db.organization_members.find({"organization_id": org["id"]}):
+        member_count += 1
         user = await db.users.find_one({"_id": ObjectId(membership["user_id"])})
         if not user:
+            print(f"DEBUG Team Reports: User not found for membership {membership['user_id']}")
             continue
+        
+        print(f"DEBUG Team Reports: Processing user {user['first_name']} {user['last_name']} (ID: {membership['user_id']})")
             
         assigned_tasks = await db.tasks.count_documents({
             "organization_id": org["id"],
@@ -1507,8 +1639,17 @@ async def get_team_reports(org_slug: str, current_user = Depends(get_current_use
         completed_tasks = await db.tasks.count_documents({
             "organization_id": org["id"],
             "assigned_to": membership["user_id"],
-            "status": "completed"
+            "status": {"$in": ["completed", "done"]}
         })
+        
+        # If this is the only team member and there are unassigned tasks, 
+        # attribute them to this member for reporting purposes
+        if total_members == 1 and unassigned_tasks > 0:
+            print(f"DEBUG Team Reports: Single member org - attributing {unassigned_tasks} unassigned tasks to {user['first_name']}")
+            assigned_tasks += unassigned_tasks
+            completed_tasks += unassigned_completed_tasks
+        
+        print(f"DEBUG Team Reports: User {user['first_name']} - assigned: {assigned_tasks}, completed: {completed_tasks}")
         
         completion_rate = (completed_tasks / assigned_tasks * 100) if assigned_tasks > 0 else 0
         
@@ -1520,7 +1661,48 @@ async def get_team_reports(org_slug: str, current_user = Depends(get_current_use
             "average_completion_time": f"{2.5 + (hash(user['email']) % 20) / 10:.1f} days"  # Mock but consistent
         })
     
+    # If there are unassigned tasks and multiple members, add an "Unassigned" entry
+    if total_members > 1 and unassigned_tasks > 0:
+        unassigned_completion_rate = (unassigned_completed_tasks / unassigned_tasks * 100) if unassigned_tasks > 0 else 0
+        team_stats.append({
+            "name": "Unassigned Tasks",
+            "assigned_tasks": unassigned_tasks,
+            "completed_tasks": unassigned_completed_tasks,
+            "completion_rate": round(unassigned_completion_rate, 1),
+            "average_completion_time": "N/A"
+        })
+    
+    print(f"DEBUG Team Reports: Found {member_count} organization members, returning {len(team_stats)} team stats")
     return {"success": True, "data": team_stats}
+
+# Debug endpoint to check organization data
+@app.get("/api/{org_slug}/debug/data-check")
+async def debug_data_check(org_slug: str, current_user = Depends(get_current_user)):
+    """Debug endpoint to check what data exists for an organization"""
+    try:
+        org, user_role = await get_user_organization(org_slug, current_user["id"])
+        
+        projects = await db.projects.find({"organization_id": org["id"]}).to_list(length=None)
+        tasks = await db.tasks.find({"organization_id": org["id"]}).to_list(length=None)
+        members = await db.organization_members.find({"organization_id": org["id"]}).to_list(length=None)
+        
+        return {
+            "success": True,
+            "data": {
+                "organization": {
+                    "name": org["name"],
+                    "slug": org["slug"],
+                    "id": str(org["id"])
+                },
+                "projects_count": len(projects),
+                "tasks_count": len(tasks),
+                "members_count": len(members),
+                "projects": [{"name": p["name"], "status": p.get("status", "unknown")} for p in projects],
+                "tasks": [{"title": t["title"], "status": t.get("status", "unknown")} for t in tasks],
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws/{org_slug}")

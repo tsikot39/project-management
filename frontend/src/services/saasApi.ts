@@ -380,4 +380,86 @@ export const dashboardApi = {
 
     return response.json();
   },
+
+  inviteMember: async (inviteData: {
+    email: string;
+    role: string;
+    message?: string;
+  }) => {
+    const token = getAuthToken();
+    const orgSlug = getOrgSlug();
+
+    if (!token || !orgSlug) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${API_BASE}/${orgSlug}/members/invite`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(inviteData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to send invitation');
+    }
+
+    return response.json();
+  },
+
+  // Remove team member
+  async removeMember(memberId: string) {
+    const token = getAuthToken();
+    const orgSlug = getOrgSlug();
+
+    if (!token || !orgSlug) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${API_BASE}/${orgSlug}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to remove member');
+    }
+
+    return response.json();
+  },
+
+  // Delete invitation
+  async deleteInvitation(invitationId: string) {
+    const token = getAuthToken();
+    const orgSlug = getOrgSlug();
+
+    if (!token || !orgSlug) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(
+      `${API_BASE}/${orgSlug}/invitations/${invitationId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete invitation');
+    }
+
+    return response.json();
+  },
 };

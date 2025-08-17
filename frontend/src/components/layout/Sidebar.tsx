@@ -21,7 +21,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  
+
   // Use custom hook for user data that automatically updates
   const user = useUserData();
 

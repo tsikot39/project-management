@@ -30,10 +30,10 @@ interface DashboardStats {
 
 export function WorkingDashboard() {
   const navigate = useNavigate();
-  
+
   // Use custom hook for user data that automatically updates
   const user = useUserData();
-  
+
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
